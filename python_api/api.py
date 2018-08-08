@@ -75,8 +75,9 @@ def get_robot(name='IRB4600#'):
 
 
 def get_robot_dof_values(robot_handle):
-    robot_joint_handle_map
-    return_code, position = vrep.simxGetJointPosition(clientID, handle, vrep.simx_opmode_blocking)
+    #TODO
+    pass
+
 
 
 def get_joints(robot_handle):
@@ -113,7 +114,7 @@ def get_joints(robot_handle):
 
     queue = []
     queue.append(robot_handle)
-    robot_joint_handle_map = {}
+    robot_joint_handle_name_map = {}
 
     while len(queue) > 0:
         parent_handle = queue.pop(0)
@@ -127,11 +128,11 @@ def get_joints(robot_handle):
                 child_index = child_index + 1
                 queue.append(child_handle)
                 if child_handle in handes_name_map:
-                    robot_joint_handle_map[child_handle] = handes_name_map.get(child_handle)
+                    robot_joint_handle_name_map[child_handle] = handes_name_map.get(child_handle)
 
     global cache
 
-    return robot_joint_handle_map
+    return robot_joint_handle_name_map
 
 
 def create_pose(transform_matrix=numpy.eye(4)):
