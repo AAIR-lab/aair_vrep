@@ -33,14 +33,12 @@ def __cache(function, args, output):
     if not cache.get(function.__name__, False):
         cache[function.__name__] = {}
 
-    cache.get(function.__name__)[args] = output
+    cache[function.__name__][args] = output
 
 
 def __get_cached(function, args):
-    # TODO, can't cache a boolean
     try:
-        return cache.get[function.__name__][args]
-
+        return cache[function.__name__][args]
     except:
         raise ReferenceError
 
@@ -98,6 +96,11 @@ def get_joints(robot_handle):
     :param robot_handle:
     :return: robot_joints: map of joint handles to their names
     '''
+    try:
+        return __get_cached(get_joints, robot_handle)
+    except:
+        pass
+
 
     # 0: Return names
     return_code, handles, intData, floatData, stringData = vrep.simxGetObjectGroupData(clientID,
@@ -130,7 +133,7 @@ def get_joints(robot_handle):
                 if child_handle in handes_name_map:
                     robot_joint_handle_name_map[child_handle] = handes_name_map.get(child_handle)
 
-    global cache
+    __cache(get_joints, robot_handle, robot_joint_handle_name_map)
 
     return robot_joint_handle_name_map
 
@@ -198,5 +201,6 @@ def setTransform(object, transform_matrix):
 if __name__ == "__main__":
     res, handle = load_robot(
         path='/home/local/ASUAD/mpookkot/Documents/V-REP_PRO_EDU_V3_5_0_Linux/models/robots/mobile/Fetch.ttm')
+    out = get_joints(handle)
     out = get_joints(handle)
     print out
