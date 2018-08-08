@@ -29,6 +29,14 @@ cache = {}
 
 
 def __cache(function, args, output):
+    '''
+    Caches the function-argument.
+    MUST BE USED ONLY FOR FUNCTIONS WHOSE RESPONSE WILL NOT CHANGE OVER TIME FOR THE ARGS
+    :param function:
+    :param args:
+    :param output:
+    :return:
+    '''
     global cache
     if not cache.get(function.__name__, False):
         cache[function.__name__] = {}
@@ -43,8 +51,13 @@ def __get_cached(function, args):
         raise ReferenceError
 
 
-def __check_resp(response):
-    if response == vrep.simx_return_ok:
+def __check_resp(response, expected):
+    '''
+    :param response:
+    :param expected:
+    :return: Throws an exception during unexpected response , else returns true
+    '''
+    if response == expected:
         return True
     else:
         print ('Remote API function call returned with error code: ', response)
@@ -53,6 +66,7 @@ def __check_resp(response):
 
 def get_bodies():
     '''
+    TODO: Not working
     Blocking call
     :return: List of kinematic bodies
     '''
@@ -61,14 +75,18 @@ def get_bodies():
     # res, objs = vrep.simxGetObjects(clientID, vrep.sim_shape_multishape_subtype, vrep.simx_opmode_blocking)
     print i
 
-    __check_resp(res)
+    __check_resp(res, vrep.simx_return_ok)
 
     return s
 
 
 def get_robot(name='IRB4600#'):
+    '''
+    :param name: name of the robot in the scene
+    :return: Robot handle
+    '''
     res, robotHandle = vrep.simxGetObjectHandle(clientID, name, vrep.simx_opmode_oneshot_wait)
-    __check_resp(res)
+    __check_resp(res, vrep.simx_return_ok)
     return robotHandle
 
 
@@ -110,11 +128,6 @@ def get_joints(robot_handle):
     for i, h in enumerate(handles):
         handes_name_map[h] = stringData[i]
 
-    #
-    # return_code, list_joint_handles_in_scene = vrep.simxGetObjects(clientID, vrep.sim_object_joint_type,
-    #                                                                vrep.simx_opmode_blocking)
-    # __check_resp(return_code)
-
     queue = []
     queue.append(robot_handle)
     robot_joint_handle_name_map = {}
@@ -126,7 +139,7 @@ def get_joints(robot_handle):
         while child_handle != -1:
             return_code, child_handle = vrep.simxGetObjectChild(clientID, parent_handle, child_index,
                                                                 vrep.simx_opmode_blocking)
-            __check_resp(return_code)
+            __check_resp(return_code, vrep.simx_return_ok)
             if child_handle != -1:
                 child_index = child_index + 1
                 queue.append(child_handle)
@@ -139,18 +152,23 @@ def get_joints(robot_handle):
 
 
 def create_pose(transform_matrix=numpy.eye(4)):
+    '''
+    Creates a shape of type 'dummy' in the scene
+    :param transform_matrix:
+    :return: None
+    '''
     size = 0.01
     res, dummy_handle = vrep.simxCreateDummy(clientID, size, None, vrep.simx_opmode_blocking)
-    __check_resp(res)
+    __check_resp(res, vrep.simx_return_ok)
 
     position = util.get_position_from_matrix(transform_matrix)
     quat = util.get_quat_from_matrix(transform_matrix)
 
     res = vrep.simxSetObjectQuaternion(clientID, dummy_handle, -1, quat, vrep.simx_opmode_blocking)
-    __check_resp(res)
+    __check_resp(res, vrep.simx_return_ok)
 
     res = vrep.simxSetObjectPosition(clientID, dummy_handle, -1, position, vrep.simx_opmode_blocking)
-    __check_resp(res)
+    __check_resp(res, vrep.simx_return_ok)
 
 
 def load_model(path, file_on_server=True):
@@ -161,46 +179,72 @@ def load_model(path, file_on_server=True):
     operationMode: a remote API function operation mode. Recommended operation mode for this function is simx_opmode_blocking
     '''
     res, handle = vrep.simxLoadModel(clientID, path, not file_on_server, vrep.simx_opmode_blocking)
-    __check_resp(res)
+    __check_resp(res, vrep.simx_return_ok)
     return res, handle
 
 
 def load_robot(path, file_on_server=True):
+    '''
+    :param path:
+    :param file_on_server: Is the file on the v-rep server or the client
+    :return: response , handle of the loaded robot
+    '''
     res, handle = load_model(path=path, file_on_server=file_on_server)
     return res, handle
 
 
-def getBodyByName(name):
+def get_body_named(name):
+    '''
+    :param name: name of the body
+    :return: Returns the handle of the body
+    '''
     pass
 
 
-def loadEnv(xml):
+def load_env(xml):
+    #TODO later
     pass
 
 
-def getTransform(object):
+def get_transform(object_handle):
+    '''
+    :param object_handle:
+    :return: Transform matrix of the object
+    '''
     pass
 
 
-def getTransformByName(name):
+def get_transform_named(object_name):
+    '''
+    :param object_name:
+    :return: The transformation matrix of the object_name
+    '''
+    return get_transform(get_body_named(object_name))
+
+
+def get_translation(object_handle):
+    '''
+    :param object:
+    :return: Return the x, y, z translation of the object
+    '''
     pass
 
 
-def getTranslation(object):
+def get_rotation(object_handle):
+    '''
+    :param object_handle:
+    :return: Return the quaternion w, x, y, z
+    '''
     pass
 
 
-def getRotation(object):
+def set_transform(object_handle, transform_matrix):
+    '''
+    :param object_handle:
+    :param transform_matrix: Returns the transform matrix (numpy matrix)
+    :return:
+    '''
     pass
 
 
-def setTransform(object, transform_matrix):
-    pass
 
-
-if __name__ == "__main__":
-    res, handle = load_robot(
-        path='/home/local/ASUAD/mpookkot/Documents/V-REP_PRO_EDU_V3_5_0_Linux/models/robots/mobile/Fetch.ttm')
-    out = get_joints(handle)
-    out = get_joints(handle)
-    print out
