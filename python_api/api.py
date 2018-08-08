@@ -39,10 +39,9 @@ def __cache(function, args, output):
 def __get_cached(function, args):
     # TODO, can't cache a boolean
     try:
-    if cache.get(function.__name__, False):
+        return cache.get[function.__name__][args]
 
-        val = cache.get(function.__name__).get(args, False)
-    else:
+    except:
         raise ReferenceError
 
 
